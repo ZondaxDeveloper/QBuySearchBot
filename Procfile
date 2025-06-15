@@ -1,1 +1,1 @@
-worker: python /Chatbot/main.py
+worker: python main.py
