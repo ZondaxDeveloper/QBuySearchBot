@@ -4,9 +4,16 @@ import requests
 from urllib.parse import quote
 import re
 
-TOKEN = "7751946058:AAEjrCiceGujRBjc-zXpY1DuCR1UzBgpVoo"
+TOKEN = "7854015293:AAHLINSa0UDGbs1cuR31-vxuA11mmYyRMxE"
 SERPAPI_KEY = "e307eea4f96c08f1374278ce8dd16af72c7583e74662080e9792a20a2fe51d9f"
 MI_TRACKING_ID = "mrd2009-21"
+TRACKING_IDS = {
+    "amazon.com": "qbuysearch-20",
+    "amazon.com.mx": "mrdmex-20",
+    "amazon.es": "mrd2009-21",
+    # puedes agregar más si te registras en más países
+}
+
 USUARIO_IDIOMAS = {}  # user_id -> 'es', 'en', 'fr', etc.
 PLACE_DOMINIOS = {
     "mx": "amazon.com.mx",
@@ -59,32 +66,43 @@ def get_idioma(update: Update) -> str:
     return "es"
 
 
-def construir_link_afiliado(link_original, tracking_id=MI_TRACKING_ID, dominio="amazon.com"):
-    asin_match = re.search(r"/(?:dp|gp/product)/([A-Z0-9]{10})", link_original)
-    if asin_match:
-        asin = asin_match.group(1)
-        return f"https://{dominio}/dp/{asin}?tag={tracking_id}"
-    if any(path in link_original for path in ["/sspa/click", "/gp/slredirect", "/gp/product", "/gp/aw/d"]):
-        if "tag=" not in link_original:
-            return f"{link_original}&tag={tracking_id}" if "?" in link_original else f"{link_original}?tag={tracking_id}"
-        else:
-            return link_original
-    if "amazon.com" in link_original:
-        if "tag=" not in link_original:
-            return f"{link_original}&tag={tracking_id}" if "?" in link_original else f"{link_original}?tag={tracking_id}"
-        else:
-            return link_original
-    return link_original
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
-def acortar_url(url_larga):
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+
+def construir_link_afiliado(link_original):
     try:
-        url_encoded = quote(url_larga, safe='')
-        r = requests.get(f"https://is.gd/create.php?format=simple&url={url_encoded}")
-        if r.status_code == 200:
-            return r.text
+        parsed = urlparse(link_original)
+        query = parse_qs(parsed.query)
+
+        dominio = parsed.netloc.replace("www.", "")
+        
+        # ❌ No usar afiliado si es US o MX
+        if dominio in ["amazon.com", "amazon.com.mx"]:
+            return link_original
+
+        tracking_id = TRACKING_IDS.get(dominio, "mrd2009-21")
+
+        if 'tag' in query:
+            return link_original
+
+        query['tag'] = tracking_id
+        new_query = urlencode(query, doseq=True)
+
+        new_url = urlunparse((
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            parsed.params,
+            new_query,
+            parsed.fragment
+        ))
+
+        return new_url
     except Exception as e:
-        print("❌ Error acortando:", e)
-    return url_larga
+        print("❌ Error construyendo link de afiliado:", e)
+        return link_original
+
 
 def extraer_asin(link):
     match = re.search(r"/(?:dp|gp/product)/([A-Z0-9]{10})", link)
@@ -119,7 +137,7 @@ def buscar_amazon(producto, dominio="amazon.com"):
                         precio = precio_raw
                     else:
                         precio = item.get("primary_offer", {}).get("price", "Sin precio")
-                    link_afiliado = construir_link_afiliado(link_original, dominio=dominio)
+                    link_afiliado = construir_link_afiliado(link_original)
                     imagen_url = item.get("thumbnail") or item.get("image")
                     resultados.append({
                         "titulo": titulo,
@@ -184,7 +202,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❗ País no válido. Usa /place mx, es, us, fr, etc.")
             return
         
-        dominio = PLACE_DOMINIOS.get(match.group(1), "amazon.com") if match else "amazon.com"
+        dominio = PLACE_DOMINIOS.get(match.group(1), "amazon.es") if match else "amazon.es"
         
         palabra_clave = re.sub(rf"{palabra_buscar}", "", texto)
         palabra_clave = re.sub(r"/place\s+\w+", "", palabra_clave).strip()
