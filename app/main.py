@@ -27,7 +27,7 @@ PLACE_DOMINIOS = {
 
 TRADUCCIONES = {
     "es": {
-        "bienvenida":"📌 Bienvenido a QBuySearch 🛍️\n\nPara buscar productos, escribe:\n➨ buscar <producto>\nSi quieres buscar en otro país, añade:\nMexico ➨ buscar <producto> /place mx\nEspaña ➨ buscar <producto> /place es\nUSA ➨ buscar <producto> /place us\n\n🌐 Puedes cambiar el idioma con: /setlang <es|en|fr>\n\nSe te mostrarán los mejores productos con precio, imagen y descripción 💵",
+        "bienvenida":"📌 Bienvenido a QBuySearch 🛍️\n\nPara buscar productos, escribe:\n➨ buscar <producto>\nSi quieres buscar en otro país, añade:\n buscar /place mx|es|us\n\n🌐 Puedes cambiar el idioma con:\n /setlang <es|en|fr>\n\nSe te mostrarán los mejores productos con precio, imagen y descripción 💵",
         "buscar_palabra": "buscar",
         "buscando": "🔎 Buscando '{query}' en {dominio}...",
         "formato_invalido": "❗️Escribe algo como: buscar audífonos bluetooth /place mx",
@@ -35,7 +35,7 @@ TRADUCCIONES = {
         "ver_producto": "Ver producto"
     },
     "en": {
-        "bienvenida": "📌 Welcome to QBuySearch 🛍️\n\nTo search for products, type:\n➨ search <product>\nTo search in another country, add:\nMexico ➨ search <product> /place mx\nSpain ➨ search <product> /place es\nUSA ➨ search <product> /place us\n\n🌐 You can change the language with: /setlang <en|es|fr>\n\nYou'll see the best products with price, image and description 💵",
+        "bienvenida": "📌 Welcome to QBuySearch 🛍️\n\nTo search for products, type:\n➨ search <product>\nTo search in another country, add:\nMexico ➨ search /place mx|es|us\n\n🌐 You can change the language with:\n /setlang <en|es|fr>\n\nYou'll see the best products with price, image and description 💵",
         "buscar_palabra": "search",
         "buscando": "🔎 Searching for '{query}' on {dominio}...",
         "formato_invalido": "❗️Type something like: search bluetooth headphones /place us",
@@ -51,7 +51,6 @@ TRADUCCIONES = {
         "ver_producto": "Voir le produit"
     }
 }
-
 def get_idioma(update: Update) -> str:
     user_id = update.effective_user.id if update.effective_user else None
     if user_id in USUARIO_IDIOMAS:
